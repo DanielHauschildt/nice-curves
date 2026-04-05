@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(fibonacciSpiralPoint(2, 0.08), 480), 480, false);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.2,
+  progress: 0.2,
   duration: 7.0,
   trailWidth: 4.0,
   breatheDuration: 5.5,

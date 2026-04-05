@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(heartWavePoint(6.4, 3.3, 0.9, 23.2, 24.5), 480), 480, false);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.18,
+  progress: 0.18,
   duration: 8.4,
   trailWidth: 3.9,
   breatheDuration: 5.6,

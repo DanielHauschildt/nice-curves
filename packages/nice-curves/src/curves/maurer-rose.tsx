@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(maurerRosePoint(2, 1, 28), 360), 360, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.08,
+  progress: 0.08,
   duration: 12,
   trailWidth: 3.2,
   breatheDuration: 6.5,

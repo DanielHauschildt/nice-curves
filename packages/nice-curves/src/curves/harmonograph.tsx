@@ -6,7 +6,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(harmonographPoint(), 960), 960, false);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.15,
+  progress: 0.15,
   duration: 10,
   trailWidth: 3.8,
   breatheDuration: 6.0,

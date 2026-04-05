@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(cochleoidPoint(30, 6 * Math.PI), 480), 480, false);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.2,
+  progress: 0.2,
   duration: 7,
   trailWidth: 4,
   breatheDuration: 5.5,

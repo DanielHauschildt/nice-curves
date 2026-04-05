@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(roundedPolygonPoint(5, 28, 0.18), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.30,
+  progress: 0.30,
   duration: 4.5,
   trailWidth: 5.0,
   breatheDuration: 4.0,

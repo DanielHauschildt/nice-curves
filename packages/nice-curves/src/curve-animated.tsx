@@ -10,7 +10,10 @@ export interface CurveAnimatedProps {
   ghostColor?: string;
   /** Ghost gradient end color */
   ghostColorEnd?: string;
-  trailSpan?: number;
+  /** Trail length as fraction of path (0 = none, 1 = full path) */
+  progress?: number;
+  /** Trail start position along path (0–1, wraps) */
+  offset?: number;
   trailWidth?: number;
   trailOpacity?: number;
   ghostWidth?: number;
@@ -37,7 +40,8 @@ export function CurveAnimated({
   trailColorEnd,
   ghostColor,
   ghostColorEnd,
-  trailSpan = 0.3,
+  progress = 0.3,
+  offset = 0,
   trailWidth = 4.5,
   trailOpacity = 0.9,
   ghostWidth = 2.5,
@@ -55,7 +59,8 @@ export function CurveAnimated({
   const absRotate = Math.abs(rotateSpeed) || 0.01;
 
   const cssVars: Record<string, string | number> = {
-    "--trail-span": trailSpan,
+    "--progress": progress,
+    "--offset": offset,
     "--trail-width": trailWidth,
     "--trail-opacity": trailOpacity,
     "--ghost-width": ghostWidth,

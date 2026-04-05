@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(freethNephroidPoint(1, 10), 720), 720, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.25,
+  progress: 0.25,
   duration: 6,
   trailWidth: 4.3,
   breatheDuration: 5,

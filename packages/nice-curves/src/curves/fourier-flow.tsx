@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(fourierFlowPoint(17, 7.5, 3.2, 15, 8.2, 4.2, 1, 0.16), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.31,
+  progress: 0.31,
   duration: 8.4,
   trailWidth: 4.2,
   breatheDuration: 6.8,

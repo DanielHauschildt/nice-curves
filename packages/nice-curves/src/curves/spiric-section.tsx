@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(spiricSectionPoint(2, 1, 10), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.3,
+  progress: 0.3,
   duration: 5.5,
   trailWidth: 4.4,
   breatheDuration: 5,

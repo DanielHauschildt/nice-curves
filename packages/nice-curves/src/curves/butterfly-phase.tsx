@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(butterflyPoint(12, 4.6, 0.45, 2, 5), 960), 960, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.32,
+  progress: 0.32,
   duration: 9.0,
   trailWidth: 4.4,
   breatheDuration: 7.0,

@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(lemniscatePoint(20, 7), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.40,
+  progress: 0.40,
   duration: 5.6,
   trailWidth: 4.8,
   breatheDuration: 5.0,

@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(cayleySexticPoint(2, 1), 720), 720, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.3,
+  progress: 0.3,
   duration: 6,
   trailWidth: 4.3,
   breatheDuration: 5,

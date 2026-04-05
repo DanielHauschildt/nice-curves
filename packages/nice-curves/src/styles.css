@@ -22,8 +22,8 @@
   opacity: var(--trail-opacity, 0.9);
   stroke-linecap: round;
   fill: none;
-  stroke-dasharray: var(--trail-span, 0.3) calc(1 - var(--trail-span, 0.3));
-  stroke-dashoffset: var(--trail-offset, 0);
+  stroke-dasharray: var(--progress, 0.3) calc(1 - var(--progress, 0.3));
+  stroke-dashoffset: var(--offset, 0);
 }
 
 .curve-rotate {
@@ -66,7 +66,8 @@
 
 /* Keyframes */
 @keyframes curve-trail {
-  to { stroke-dashoffset: -1; }
+  from { stroke-dashoffset: var(--offset, 0); }
+  to { stroke-dashoffset: calc(var(--offset, 0) - 1); }
 }
 @keyframes curve-breathe {
   0%, 100% { transform: scale(var(--breathe-min, 0.95)); }

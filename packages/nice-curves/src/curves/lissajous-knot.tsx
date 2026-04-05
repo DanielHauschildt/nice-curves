@@ -6,7 +6,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(lissajousKnotPoint(28), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.3,
+  progress: 0.3,
   duration: 6.0,
   trailWidth: 4.5,
   breatheDuration: 5.4,

@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(hypotrochoidPoint(8.2, 2.7, 0.45, 4.8, 1.2, 3.05), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.46,
+  progress: 0.46,
   duration: 7.6,
   trailWidth: 4.6,
   breatheDuration: 6.2,

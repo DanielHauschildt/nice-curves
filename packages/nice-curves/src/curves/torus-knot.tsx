@@ -6,7 +6,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(torusKnotPoint(11), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.30,
+  progress: 0.30,
   duration: 6.0,
   trailWidth: 4.3,
   breatheDuration: 5.2,

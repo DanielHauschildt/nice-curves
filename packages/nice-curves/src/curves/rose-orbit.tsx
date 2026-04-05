@@ -7,7 +7,7 @@ import { normalize, buildPath } from "../normalize";
 const defaultD = buildPath(normalize(roseOrbitPoint(7, 2.7, 7, 3.9), 480), 480, true);
 
 const defaults: Partial<CurveAnimatedProps> = {
-  trailSpan: 0.42,
+  progress: 0.42,
   duration: 5.2,
   trailWidth: 5.2,
   breatheDuration: 4.6,

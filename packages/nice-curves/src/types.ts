@@ -17,7 +17,7 @@ export interface CurveConfig {
   name: string;
   tag: string;
   point: PointFunction;
-  trailSpan: number;
+  progress: number;
   duration: number;
   strokeWidth: number;
   rotate: number;
