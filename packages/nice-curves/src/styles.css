@@ -1,0 +1,77 @@
+/* ══════════════════════════════════════════════════════════
+   Curve SVG — pure structure, reads CSS vars from parent
+   ══════════════════════════════════════════════════════════ */
+
+.curve-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.curve-ghost {
+  /* stroke set inline via url(#gradient) */
+  stroke-width: var(--ghost-width, 2.5);
+  opacity: var(--ghost-opacity, 0.07);
+  stroke-linecap: round;
+  fill: none;
+}
+
+.curve-trail {
+  /* stroke set inline via url(#gradient) */
+  stroke-width: var(--trail-width, 4.5);
+  opacity: var(--trail-opacity, 0.9);
+  stroke-linecap: round;
+  fill: none;
+  stroke-dasharray: var(--trail-span, 0.3) calc(1 - var(--trail-span, 0.3));
+  stroke-dashoffset: var(--trail-offset, 0);
+}
+
+.curve-rotate {
+  transform-origin: 50px 50px;
+  transform: rotate(var(--rotate, 0deg));
+}
+
+.curve-breathe {
+  transform-origin: 50px 50px;
+  transform: scale(var(--breathe-scale, 1));
+}
+
+/* ══════════════════════════════════════════════════════════
+   Animation — applied from wrapper div, cascades into SVG
+   ══════════════════════════════════════════════════════════ */
+
+.curve-animated .curve-trail {
+  animation: curve-trail var(--duration, 5s) linear infinite;
+}
+
+.curve-animated .curve-breathe {
+  animation: curve-breathe var(--breathe-duration, 5s) ease-in-out infinite;
+}
+
+.curve-animated .curve-rotate {
+  animation: curve-spin var(--rotate-duration, 0s) linear infinite;
+  animation-play-state: running;
+}
+
+/* Direction modifiers */
+.curve-animated.reverse-trail .curve-trail {
+  animation-direction: reverse;
+}
+.curve-animated.reverse-rotate .curve-rotate {
+  animation-direction: reverse;
+}
+.curve-animated.paused .curve-trail {
+  animation-play-state: paused;
+}
+
+/* Keyframes */
+@keyframes curve-trail {
+  to { stroke-dashoffset: -1; }
+}
+@keyframes curve-breathe {
+  0%, 100% { transform: scale(var(--breathe-min, 0.95)); }
+  50% { transform: scale(var(--breathe-max, 1.05)); }
+}
+@keyframes curve-spin {
+  to { transform: rotate(-360deg); }
+}

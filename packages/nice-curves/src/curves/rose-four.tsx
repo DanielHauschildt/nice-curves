@@ -1,0 +1,33 @@
+import { useMemo } from "react";
+import { CurveSVG } from "../curve-svg";
+import { CurveAnimated, type CurveAnimatedProps } from "../curve-animated";
+import { roseCurvePoint } from "../factories";
+import { normalize, buildPath } from "../normalize";
+
+const defaultD = buildPath(normalize(roseCurvePoint(9.2, 0.6, 0.72, 0.28, 4, 3.25), 480), 480, true);
+
+const defaults: Partial<CurveAnimatedProps> = {
+  trailSpan: 0.32,
+  duration: 5.4,
+  trailWidth: 4.6,
+  breatheDuration: 4.5,
+  rotateSpeed: 30 / 28,
+};
+
+interface RoseFourProps extends Partial<CurveAnimatedProps> {
+  args?: Partial<{ a: number; k: number; sc: number }>;
+}
+
+export function RoseFour({ args, ...props }: RoseFourProps) {
+  const d = useMemo(() => {
+    if (!args) return defaultD;
+    const merged = { a: 9.2, k: 4, sc: 3.25, ...args };
+    return buildPath(normalize(roseCurvePoint(merged.a, 0.6, 0.72, 0.28, merged.k, merged.sc), 480), 480, true);
+  }, [args]);
+
+  return (
+    <CurveAnimated {...defaults} {...props}>
+      <CurveSVG d={d} />
+    </CurveAnimated>
+  );
+}
