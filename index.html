@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Math Curve Loaders – Pure SVG</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { margin: 0; box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #080808;
+      color: #f0f0f0;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    .page { margin-right: 300px; }
+
+    header { text-align: center; padding: 40px 24px 12px; }
+    header h1 { font-size: 28px; font-weight: 700; }
+    header p { margin-top: 8px; font-size: 14px; color: rgba(255,255,255,0.5); letter-spacing: 0.12em; text-transform: uppercase; }
+
+    /* ── Gallery ───────────────────────────────────────── */
+    .gallery {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+      gap: 12px; padding: 12px 24px 24px; align-content: start;
+    }
+    .curve-card {
+      display: grid; gap: 10px; justify-items: center;
+      padding: 16px 12px 14px; border-radius: 16px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      transition: border-color 0.2s; cursor: pointer;
+    }
+    .curve-card:hover { border-color: rgba(255,255,255,0.14); }
+    .curve-card.is-selected { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.06); }
+
+    .curve-frame { width: 100%; aspect-ratio: 1; display: grid; place-items: center; }
+    .curve-frame svg { width: 100%; height: 100%; overflow: visible; }
+    .curve-meta { text-align: center; }
+    .curve-name { font-size: 15px; font-weight: 600; }
+    .curve-tag { margin-top: 3px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+
+    /* ── SVG via CSS vars ──────────────────────────────── */
+    .curve-ghost { stroke: var(--curve-color, currentColor); stroke-width: var(--curve-ghost-width, 2.5); opacity: var(--curve-ghost-opacity, 0.07); }
+    .curve-trail { stroke: var(--curve-color, currentColor); stroke-width: var(--curve-stroke-width, 4.5); opacity: var(--curve-trail-opacity, 0.9); stroke-linecap: round; }
+    .curve-breathe { transform-origin: 50px 50px; animation: breathe var(--curve-breathe-duration, 5s) ease-in-out infinite; }
+    .curve-rotate { transform-origin: 50px 50px; }
+    @keyframes breathe { 0%, 100% { transform: scale(var(--curve-breathe-min, 0.95)); } 50% { transform: scale(var(--curve-breathe-max, 1.05)); } }
+    @keyframes spin { to { transform: rotate(-360deg); } }
+    @keyframes spin-reverse { to { transform: rotate(360deg); } }
+
+    /* ── Sidebar (always visible) ──────────────────────── */
+    .sidebar {
+      position: fixed; top: 0; right: 0; width: 300px; height: 100vh;
+      background: #111; border-left: 1px solid rgba(255,255,255,0.08);
+      overflow-y: auto; padding: 24px 20px;
+      display: grid; align-content: start; gap: 16px;
+    }
+    .sidebar-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .sidebar-title { font-size: 18px; font-weight: 700; }
+    .sidebar-tag { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .sidebar-section { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 4px; }
+    .sidebar-params { display: grid; gap: 12px; }
+    .sidebar-empty { font-size: 13px; color: rgba(255,255,255,0.3); font-style: italic; }
+    .sidebar-reset {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 13px;
+      padding: 8px 16px; cursor: pointer; transition: background 0.15s; justify-self: start;
+    }
+    .sidebar-reset:hover { background: rgba(255,255,255,0.1); }
+
+    .ctrl { display: grid; gap: 4px; }
+    .ctrl-head { display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.5); }
+    .ctrl-val-input {
+      width: 64px; font-size: 12px; font-family: inherit; font-variant-numeric: tabular-nums;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px; color: rgba(255,255,255,0.75); padding: 2px 6px; outline: none; text-align: right;
+    }
+    .ctrl-val-input:focus { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); }
+    .ctrl input[type="range"] {
+      width: 100%; height: 4px; appearance: none;
+      background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; cursor: pointer;
+    }
+    .ctrl input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; border: none; box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    }
+    .ctrl input[type="color"] {
+      width: 100%; height: 30px; border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px; background: transparent; cursor: pointer; padding: 0;
+    }
+
+    @media (max-width: 768px) {
+      .page { margin-right: 0; margin-bottom: 50vh; }
+      .sidebar { position: fixed; top: auto; bottom: 0; right: 0; width: 100%; height: 50vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.08); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Math Curve Loaders</h1>
+      <p>Pure SVG + CSS animated mathematical curves</p>
+    </header>
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">Global</div>
+    <label class="ctrl">
+      <div class="ctrl-head"><span>Card Size</span><input type="number" class="ctrl-val-input" id="size-val" value="128" step="any"/></div>
+      <input type="range" min="32" max="1024" step="32" value="128" id="size-slider"/>
+    </label>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:4px 0"/>
+    <div class="sidebar-head">
+      <div><div class="sidebar-title" id="sb-name">Select a curve</div><div class="sidebar-tag" id="sb-tag">Click any card to adjust its parameters</div></div>
+    </div>
+    <div class="sidebar-params" id="sb-params"></div>
+    <button class="sidebar-reset" id="sb-reset" style="display:none">Reset to defaults</button>
+  </aside>
+
+  <script>
+    const S = 0.76;
+
+    // ── Point function factories ──────────────────────────
+
+    function customRosePoint(R,A,k,sc){return p=>{const t=p*Math.PI*2;return{x:50+(R*Math.cos(t)-A*S*Math.cos(k*t))*sc,y:50+(R*Math.sin(t)-A*S*Math.sin(k*t))*sc};};}
+    function roseOrbitPoint(R,A,k,sc){return p=>{const t=p*Math.PI*2,r=R-A*S*Math.cos(k*t);return{x:50+Math.cos(t)*r*sc,y:50+Math.sin(t)*r*sc};};}
+    function roseCurvePoint(a,aB,bB,bBo,k,sc){return p=>{const t=p*Math.PI*2,A=a+S*aB,r=A*(bB+S*bBo)*Math.cos(k*t);return{x:50+Math.cos(t)*r*sc,y:50+Math.sin(t)*r*sc};};}
+    function lissajousPoint(amp,aB,a,b,ph,yS){return p=>{const t=p*Math.PI*2,A=amp+S*aB;return{x:50+Math.sin(a*t+ph)*A,y:50+Math.sin(b*t)*A*yS};};}
+    function lemniscatePoint(a,bo){return p=>{const t=p*Math.PI*2,sc=a+S*bo,d=1+Math.sin(t)**2;return{x:50+sc*Math.cos(t)/d,y:50+sc*Math.sin(t)*Math.cos(t)/d};};}
+    function hypotrochoidPoint(R,r,rB,d,dB,sc){return p=>{const t=p*Math.PI*2,rr=r+S*rB,dd=d+S*dB;const x=(R-rr)*Math.cos(t)+dd*Math.cos(((R-rr)/rr)*t),y=(R-rr)*Math.sin(t)-dd*Math.sin(((R-rr)/rr)*t);return{x:50+x*sc,y:50+y*sc};};}
+    function petalSpiralPoint(R,r,d,sc,br){return p=>{const t=p*Math.PI*2,dd=d+S*0.25;const bx=(R-r)*Math.cos(t)+dd*Math.cos(((R-r)/r)*t),by=(R-r)*Math.sin(t)-dd*Math.sin(((R-r)/r)*t);const s=sc+S*br;return{x:50+bx*s,y:50+by*s};};}
+    function butterflyPoint(turns,sc,pu,cw,pw){return p=>{const t=p*Math.PI*turns,b=Math.exp(Math.cos(t))-cw*Math.cos(4*t)-Math.sin(t/12)**pw,s=sc+S*pu;return{x:50+Math.sin(t)*b*s,y:50+Math.cos(t)*b*s};};}
+    function cardioidGlowPoint(a,pu,sc){return p=>{const t=p*Math.PI*2,A=a+S*pu,r=A*(1-Math.cos(t));return{x:50+Math.cos(t)*r*sc,y:50+Math.sin(t)*r*sc};};}
+    function cardioidHeartPoint(a,pu,sc){return p=>{const t=p*Math.PI*2,A=a+S*pu,r=A*(1+Math.cos(t)),bx=Math.cos(t)*r,by=Math.sin(t)*r;return{x:50-by*sc,y:50-bx*sc};};}
+    function heartWavePoint(b,root,amp,sX,sY){return p=>{const xL=Math.sqrt(root),x=-xL+p*xL*2,sf=Math.max(0,root-x*x);const w=amp*Math.sqrt(sf)*Math.sin(b*Math.PI*x),c=Math.pow(Math.abs(x),2/3),y=c+w,sy=sY+S*1.5;return{x:50+x*sX,y:18+(1.75-y)*sy};};}
+    function spiralSearchPoint(turns,base,rAmp,pu,sc){return p=>{const t=p*Math.PI*2,a=t*turns,r=base+(1-Math.cos(t))*(rAmp+S*pu);return{x:50+Math.cos(a)*r*sc,y:50+Math.sin(a)*r*sc};};}
+    function fourierFlowPoint(x1,x3,x5,y1,y2,y4,mB,mP){return p=>{const t=p*Math.PI*2,m=mB+S*mP;const x=x1*Math.cos(t)+x3*Math.cos(3*t+0.6*m)+x5*Math.sin(5*t-0.4);const y=y1*Math.sin(t)+y2*Math.sin(2*t+0.25)-y4*Math.cos(4*t-0.5*m);return{x:50+x,y:50+y};};}
+    function fermatSpiralPoint(turns,maxR){return p=>{const maxT=turns*Math.PI*2,t=p*maxT,r=maxR*Math.sqrt(t/maxT);return{x:50+Math.cos(t)*r,y:50+Math.sin(t)*r};};}
+    function logSpiralPoint(b,turns,maxR){const maxT=turns*Math.PI*2,eM=Math.exp(b*maxT)-1;return p=>{const t=p*maxT,r=((Math.exp(b*t)-1)/eM)*maxR;return{x:50+Math.cos(t)*r,y:50+Math.sin(t)*r};};}
+    function involutePoint(turns,sc){const maxT=turns*Math.PI*2;return p=>{const t=p*maxT;return{x:50+(Math.cos(t)+t*Math.sin(t))*sc,y:50+(Math.sin(t)-t*Math.cos(t))*sc};};}
+    function trefoilKnotPoint(sc){return p=>{const t=p*Math.PI*2;return{x:50+(Math.sin(t)+2*Math.sin(2*t))*sc,y:50+(Math.cos(t)-2*Math.cos(2*t))*sc};};}
+    function torusKnotPoint(sc){return p=>{const t=p*Math.PI*2,r=2+Math.cos(2*t);return{x:50+r*Math.cos(3*t)*sc,y:50+r*Math.sin(3*t)*sc};};}
+    function epitrochoidPoint(R,r,d,sc){return p=>{const t=p*Math.PI*2;const x=(R+r)*Math.cos(t)-d*Math.cos(((R+r)/r)*t),y=(R+r)*Math.sin(t)-d*Math.sin(((R+r)/r)*t);return{x:50+x*sc,y:50+y*sc};};}
+    function superellipsePoint(n,a,b){return p=>{const t=p*Math.PI*2,c=Math.cos(t),s=Math.sin(t),e=2/n;return{x:50+a*Math.sign(c)*Math.pow(Math.abs(c),e),y:50+b*Math.sign(s)*Math.pow(Math.abs(s),e)};};}
+    function astroidPoint(a){return p=>{const t=p*Math.PI*2;return{x:50+a*Math.pow(Math.cos(t),3),y:50+a*Math.pow(Math.sin(t),3)};};}
+    function deltoidPoint(sc){return p=>{const t=p*Math.PI*2;return{x:50+(2*Math.cos(t)+Math.cos(2*t))*sc,y:50+(2*Math.sin(t)-Math.sin(2*t))*sc};};}
+    function nephroidPoint(a){return p=>{const t=p*Math.PI*2;return{x:50+a*(3*Math.cos(t)-Math.cos(3*t)),y:50+a*(3*Math.sin(t)-Math.sin(3*t))};};}
+    function lituusPoint(k,tMin,tMax,sc){return p=>{const t=tMin+p*(tMax-tMin),r=Math.sqrt(k/t)*sc;return{x:50+Math.cos(t)*r,y:50+Math.sin(t)*r};};}
+    function cassiniOvalPoint(a,b,sc){const a2=a*a,a4=a2*a2,b4=b*b*b*b;return p=>{const t=p*Math.PI*2,c2=Math.cos(2*t),s2=Math.sin(2*t);const r2=a2*c2+Math.sqrt(Math.max(0,b4-a4*s2*s2));const r=Math.sqrt(Math.max(0,r2))*sc;return{x:50+Math.cos(t)*r,y:50+Math.sin(t)*r};};}
+    function maurerRosePoint(n,d,sc){return p=>{const theta=p*360*d*Math.PI/180,r=Math.sin(n*theta)*sc;return{x:50+r*Math.cos(theta),y:50+r*Math.sin(theta)};};}
+    function harmonographPoint(){return p=>{const t=p*45,d1=Math.exp(-0.015*t),d2=Math.exp(-0.022*t);const x=22*Math.sin(2*t+0.7)*d1+10*Math.sin(3.01*t)*d2;const y=22*Math.sin(3*t+1.5)*d1+10*Math.sin(2.01*t+0.5)*d2;return{x:50+x,y:50+y};};}
+    function roundedPolygonPoint(n,R,amp){return p=>{const t=p*Math.PI*2,r=R*(1+amp*Math.cos(n*t));return{x:50+r*Math.cos(t),y:50+r*Math.sin(t)};};}
+    function reuleauxTrianglePoint(sz){const v=[0,1,2].map(i=>{const a=Math.PI/2+i*2*Math.PI/3;return[sz*Math.cos(a),sz*Math.sin(a)];});const side=sz*Math.sqrt(3);return p=>{const seg=Math.min(2,Math.floor(p*3)),lp=p*3-seg;const[cx,cy]=v[seg],[fx,fy]=v[(seg+1)%3],[tx,ty]=v[(seg+2)%3];const a1=Math.atan2(fy-cy,fx-cx),a2=Math.atan2(ty-cy,tx-cx);let da=a2-a1;if(da>Math.PI)da-=2*Math.PI;if(da<-Math.PI)da+=2*Math.PI;const angle=a1+lp*da;return{x:50+cx+side*Math.cos(angle),y:50+cy+side*Math.sin(angle)};};}
+
+    // ── Normalize ─────────────────────────────────────────
+    const TARGET = 36;
+    function normalize(fn, steps) {
+      steps=steps||480;let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+      for(let i=0;i<=steps;i++){const pt=fn(i/steps);if(pt.x<x0)x0=pt.x;if(pt.x>x1)x1=pt.x;if(pt.y<y0)y0=pt.y;if(pt.y>y1)y1=pt.y;}
+      const cx=(x0+x1)/2,cy=(y0+y1)/2,sc=(TARGET*2)/Math.max(x1-x0,y1-y0);
+      return function(p){const pt=fn(p);return{x:50+(pt.x-cx)*sc,y:50+(pt.y-cy)*sc};};
+    }
+
+    // ── Curve definitions ─────────────────────────────────
+    const P=(key,label,min,max,step)=>({key,label,min,max,step});
+
+    const curves = [
+      { name:"Original Thinking",tag:"Custom Rose Trail",point:customRosePoint(7,3,7,3.9),trailSpan:.38,duration:4.6,strokeWidth:5.5,rotate:28,breathe:4.2,
+        rebuild:a=>customRosePoint(a.R,a.A,a.k,a.sc),args:{R:7,A:3,k:7,sc:3.9},params:[P("R","Base Radius",2,12,.1),P("A","Detail Amp",0.5,6,.1),P("k","Petals",2,15,1),P("sc","Scale",1,6,.1)]},
+      { name:"Thinking Five",tag:"Custom Rose Trail",point:customRosePoint(7,3,5,3.9),trailSpan:.38,duration:4.6,strokeWidth:5.5,rotate:28,breathe:4.2,
+        rebuild:a=>customRosePoint(a.R,a.A,a.k,a.sc),args:{R:7,A:3,k:5,sc:3.9},params:[P("R","Base Radius",2,12,.1),P("A","Detail Amp",0.5,6,.1),P("k","Petals",2,15,1)]},
+      { name:"Thinking Nine",tag:"Custom Rose Trail",point:customRosePoint(7,3,9,3.9),trailSpan:.39,duration:4.7,strokeWidth:5.5,rotate:30,breathe:4.2,
+        rebuild:a=>customRosePoint(a.R,a.A,a.k,a.sc),args:{R:7,A:3,k:9,sc:3.9},params:[P("R","Base Radius",2,12,.1),P("A","Detail Amp",0.5,6,.1),P("k","Petals",2,15,1)]},
+      { name:"Rose Orbit",tag:"r = cos(k\u03b8)",point:roseOrbitPoint(7,2.7,7,3.9),trailSpan:.42,duration:5.2,strokeWidth:5.2,rotate:28,breathe:4.6,
+        rebuild:a=>roseOrbitPoint(a.R,a.A,a.k,a.sc),args:{R:7,A:2.7,k:7,sc:3.9},params:[P("R","Orbit Radius",3,12,.1),P("A","Detail Amp",0.5,5,.1),P("k","k",2,12,1)]},
+      { name:"Rose Curve",tag:"r = a cos(5\u03b8)",point:roseCurvePoint(9.2,.6,.72,.28,5,3.25),trailSpan:.32,duration:5.4,strokeWidth:4.5,rotate:28,breathe:4.6,
+        rebuild:a=>roseCurvePoint(a.a,a.aB,.72,.28,a.k,a.sc),args:{a:9.2,aB:0.6,k:5,sc:3.25},params:[P("a","Amplitude",5,14,.1),P("k","k",2,10,1),P("sc","Scale",2,5,.05)]},
+      { name:"Rose Two",tag:"r = a cos(2\u03b8)",point:roseCurvePoint(9.2,.6,.72,.28,2,3.25),trailSpan:.30,duration:5.2,strokeWidth:4.6,rotate:28,breathe:4.3,
+        rebuild:a=>roseCurvePoint(a.a,.6,.72,.28,a.k,a.sc),args:{a:9.2,k:2,sc:3.25},params:[P("a","Amplitude",5,14,.1),P("k","k",2,10,1)]},
+      { name:"Rose Three",tag:"r = a cos(3\u03b8)",point:roseCurvePoint(9.2,.6,.72,.28,3,3.25),trailSpan:.31,duration:5.3,strokeWidth:4.6,rotate:28,breathe:4.4,
+        rebuild:a=>roseCurvePoint(a.a,.6,.72,.28,a.k,a.sc),args:{a:9.2,k:3,sc:3.25},params:[P("a","Amplitude",5,14,.1),P("k","k",2,10,1)]},
+      { name:"Rose Four",tag:"r = a cos(4\u03b8)",point:roseCurvePoint(9.2,.6,.72,.28,4,3.25),trailSpan:.32,duration:5.4,strokeWidth:4.6,rotate:28,breathe:4.5,
+        rebuild:a=>roseCurvePoint(a.a,.6,.72,.28,a.k,a.sc),args:{a:9.2,k:4,sc:3.25},params:[P("a","Amplitude",5,14,.1),P("k","k",2,10,1)]},
+      { name:"Lissajous Drift",tag:"x=sin(at), y=sin(bt)",point:lissajousPoint(24,6,3,4,1.57,0.92),trailSpan:.34,duration:6.0,strokeWidth:4.7,rotate:0,breathe:5.4,
+        rebuild:a=>lissajousPoint(a.amp,6,a.a,a.b,a.ph,a.yS),args:{amp:24,a:3,b:4,ph:1.57,yS:0.92},params:[P("a","Freq X",1,8,1),P("b","Freq Y",1,8,1),P("amp","Amplitude",10,40,.5),P("ph","Phase",0,6.28,.05),P("yS","Y Scale",0.4,1.4,.01)]},
+      { name:"Lemniscate Bloom",tag:"Bernoulli Lemniscate",point:lemniscatePoint(20,7),trailSpan:.40,duration:5.6,strokeWidth:4.8,rotate:0,breathe:5.0,
+        rebuild:a=>lemniscatePoint(a.a,a.bo),args:{a:20,bo:7},params:[P("a","Size",8,30,.5),P("bo","Pulse",0,12,.1)]},
+      { name:"Hypotrochoid Loop",tag:"Inner Spirograph",point:hypotrochoidPoint(8.2,2.7,.45,4.8,1.2,3.05),trailSpan:.46,duration:7.6,strokeWidth:4.6,rotate:0,breathe:6.2,
+        rebuild:a=>hypotrochoidPoint(a.R,a.r,.45,a.d,1.2,a.sc),args:{R:8.2,r:2.7,d:4.8,sc:3.05},params:[P("R","R",3,12,.1),P("r","r",0.5,5,.1),P("d","d",1,8,.1),P("sc","Scale",1.5,4.5,.05)]},
+      { name:"Three-Petal Spiral",tag:"R=3, r=1, d=3",point:petalSpiralPoint(3,1,3,2.2,0.45),trailSpan:.34,duration:4.6,strokeWidth:4.4,rotate:28,breathe:4.2,
+        rebuild:a=>petalSpiralPoint(a.R,a.r,a.d,2.2,0.45),args:{R:3,r:1,d:3},params:[P("R","R",2,8,1),P("r","r",0.5,3,.1),P("d","d",1,5,.1)]},
+      { name:"Four-Petal Spiral",tag:"R=4, r=1, d=3",point:petalSpiralPoint(4,1,3,2.2,0.45),trailSpan:.34,duration:4.6,strokeWidth:4.4,rotate:28,breathe:4.2,
+        rebuild:a=>petalSpiralPoint(a.R,a.r,a.d,2.2,0.45),args:{R:4,r:1,d:3},params:[P("R","R",2,8,1),P("r","r",0.5,3,.1),P("d","d",1,5,.1)]},
+      { name:"Five-Petal Spiral",tag:"R=5, r=1, d=3",point:petalSpiralPoint(5,1,3,2.2,0.45),trailSpan:.34,duration:4.6,strokeWidth:4.4,rotate:28,breathe:4.2,
+        rebuild:a=>petalSpiralPoint(a.R,a.r,a.d,2.2,0.45),args:{R:5,r:1,d:3},params:[P("R","R",2,8,1),P("r","r",0.5,3,.1),P("d","d",1,5,.1)]},
+      { name:"Six-Petal Spiral",tag:"R=6, r=1, d=3",point:petalSpiralPoint(6,1,3,2.2,0.45),trailSpan:.34,duration:4.6,strokeWidth:4.4,rotate:28,breathe:4.2,
+        rebuild:a=>petalSpiralPoint(a.R,a.r,a.d,2.2,0.45),args:{R:6,r:1,d:3},params:[P("R","R",2,8,1),P("r","r",0.5,3,.1),P("d","d",1,5,.1)]},
+      { name:"Butterfly Phase",tag:"Butterfly Curve",point:butterflyPoint(12,4.6,0.45,2,5),trailSpan:.32,duration:9.0,strokeWidth:4.4,rotate:0,breathe:7.0,steps:960,
+        rebuild:a=>butterflyPoint(a.turns,a.sc,0.45,a.cw,a.pw),args:{turns:12,sc:4.6,cw:2,pw:5},params:[P("turns","Turns",4,18,.5),P("cw","Cos Weight",0.5,4,.05),P("pw","Power",2,8,1),P("sc","Scale",2.5,7,.05)]},
+      { name:"Cardioid Glow",tag:"Cardioid",point:cardioidGlowPoint(8.4,0.8,2.15),trailSpan:.36,duration:6.2,strokeWidth:4.9,rotate:0,breathe:5.2,
+        rebuild:a=>cardioidGlowPoint(a.a,a.pu,a.sc),args:{a:8.4,pu:0.8,sc:2.15},params:[P("a","Size",4,14,.1),P("pu","Pulse",0,2,.05),P("sc","Scale",1,3.5,.05)]},
+      { name:"Cardioid Heart",tag:"r = a(1+cos\u03b8)",point:cardioidHeartPoint(8.8,0.8,2.15),trailSpan:.36,duration:6.2,strokeWidth:4.9,rotate:0,breathe:5.2,
+        rebuild:a=>cardioidHeartPoint(a.a,a.pu,a.sc),args:{a:8.8,pu:0.8,sc:2.15},params:[P("a","Size",4,14,.1),P("pu","Pulse",0,2,.05)]},
+      { name:"Heart Wave",tag:"f(x) Heart Wave",point:heartWavePoint(6.4,3.3,0.9,23.2,24.5),trailSpan:.18,duration:8.4,strokeWidth:3.9,rotate:0,breathe:5.6,open:true,alternate:true,
+        rebuild:a=>heartWavePoint(a.b,a.root,a.amp,23.2,24.5),args:{b:6.4,root:3.3,amp:0.9},params:[P("b","Wave Freq",2,12,.1),P("root","Root Span",2.2,4.2,.05),P("amp","Wave Amp",0.3,1.6,.05)]},
+      { name:"Spiral Search",tag:"Archimedean Spiral",point:spiralSearchPoint(4,8,8.5,2.4,1),trailSpan:.28,duration:7.8,strokeWidth:4.3,rotate:0,breathe:6.8,
+        rebuild:a=>spiralSearchPoint(a.turns,a.base,a.rA,2.4,1),args:{turns:4,base:8,rA:8.5},params:[P("turns","Turns",2,8,.1),P("base","Base Radius",2,16,.1),P("rA","Radius Amp",2,16,.1)]},
+      { name:"Fourier Flow",tag:"Fourier Curve",point:fourierFlowPoint(17,7.5,3.2,15,8.2,4.2,1,0.16),trailSpan:.31,duration:8.4,strokeWidth:4.2,rotate:0,breathe:6.8,
+        rebuild:a=>fourierFlowPoint(a.x1,a.x3,a.x5,a.y1,a.y2,a.y4,1,0.16),args:{x1:17,x3:7.5,x5:3.2,y1:15,y2:8.2,y4:4.2},params:[P("x1","x cos1",4,24,.1),P("x3","x cos3",0,14,.1),P("y1","y sin1",4,24,.1),P("y2","y sin2",0,14,.1)]},
+      { name:"Fermat Spiral",tag:"r = a\u221a\u03b8",point:fermatSpiralPoint(4,36),trailSpan:.22,duration:7.0,strokeWidth:4.0,rotate:0,breathe:5.5,open:true,alternate:true,
+        rebuild:a=>fermatSpiralPoint(a.turns,36),args:{turns:4},params:[P("turns","Turns",1,8,.5)]},
+      { name:"Golden Spiral",tag:"r = ae^(b\u03b8)",point:logSpiralPoint(0.18,3.5,36),trailSpan:.22,duration:7.5,strokeWidth:4.0,rotate:0,breathe:5.5,open:true,alternate:true,
+        rebuild:a=>logSpiralPoint(a.b,a.turns,36),args:{b:0.18,turns:3.5},params:[P("b","Growth Rate",0.05,0.4,.005),P("turns","Turns",1.5,6,.5)]},
+      { name:"Circle Involute",tag:"Involute of a Circle",point:involutePoint(3,1.8),trailSpan:.24,duration:7.0,strokeWidth:4.2,rotate:0,breathe:5.5,open:true,alternate:true,
+        rebuild:a=>involutePoint(a.turns,1.8),args:{turns:3},params:[P("turns","Turns",1,6,.5)]},
+      { name:"Lituus",tag:"r\u00b2\u03b8 = k",point:lituusPoint(12,0.3,7*Math.PI,4.5),trailSpan:.25,duration:7.0,strokeWidth:4.0,rotate:0,breathe:5.5,open:true,alternate:true,
+        rebuild:a=>lituusPoint(a.k,0.3,7*Math.PI,4.5),args:{k:12},params:[P("k","k",4,30,.5)]},
+      { name:"Trefoil Knot",tag:"Topology Knot",point:trefoilKnotPoint(12),trailSpan:.35,duration:5.5,strokeWidth:4.5,rotate:0,breathe:5.0},
+      { name:"Torus Knot",tag:"(3,2) Torus Knot",point:torusKnotPoint(11),trailSpan:.30,duration:6.0,strokeWidth:4.3,rotate:0,breathe:5.2},
+      { name:"Epitrochoid",tag:"Outer Spirograph",point:epitrochoidPoint(5,2,3.5,3),trailSpan:.35,duration:5.5,strokeWidth:4.4,rotate:24,breathe:4.5,
+        rebuild:a=>epitrochoidPoint(a.R,a.r,a.d,a.sc),args:{R:5,r:2,d:3.5,sc:3},params:[P("R","R",2,10,.1),P("r","r",0.5,5,.1),P("d","d",0.5,6,.1),P("sc","Scale",1,5,.05)]},
+      { name:"Squircle",tag:"Superellipse n=4",point:superellipsePoint(4,30,30),trailSpan:.30,duration:4.5,strokeWidth:5.0,rotate:20,breathe:4.0,
+        rebuild:a=>superellipsePoint(a.n,30,30),args:{n:4},params:[P("n","Exponent",0.5,8,.1)]},
+      { name:"Astroid",tag:"4-Cusped Hypocycloid",point:astroidPoint(28),trailSpan:.32,duration:4.8,strokeWidth:4.8,rotate:22,breathe:4.2},
+      { name:"Deltoid",tag:"3-Cusped Hypocycloid",point:deltoidPoint(11),trailSpan:.34,duration:5.0,strokeWidth:4.6,rotate:24,breathe:4.5},
+      { name:"Nephroid",tag:"Kidney Curve",point:nephroidPoint(7.5),trailSpan:.34,duration:5.2,strokeWidth:4.7,rotate:0,breathe:5.0},
+      { name:"Cassini Oval",tag:"Product of Distances",point:cassiniOvalPoint(10,12.5,2.3),trailSpan:.34,duration:5.5,strokeWidth:4.6,rotate:0,breathe:5.0,
+        rebuild:a=>cassiniOvalPoint(a.a,a.b,2.3),args:{a:10,b:12.5},params:[P("a","Focus dist (a)",4,16,.1),P("b","Product (b)",6,20,.1)]},
+      { name:"Maurer Rose",tag:"n=6, d=71\u00b0",point:maurerRosePoint(6,71,28),trailSpan:.08,duration:12,strokeWidth:3.2,rotate:0,breathe:6.5,steps:360,
+        rebuild:a=>maurerRosePoint(a.n,a.d,28),args:{n:6,d:71},params:[P("n","n",2,10,1),P("d","d (degrees)",1,180,1)]},
+      { name:"Harmonograph",tag:"Damped Pendulum",point:harmonographPoint(),trailSpan:.15,duration:10,strokeWidth:3.8,rotate:0,breathe:6.0,open:true,alternate:true,steps:960},
+      { name:"Circle",tag:"r = const",point:p=>{const t=p*Math.PI*2;return{x:50+30*Math.cos(t),y:50+30*Math.sin(t)};},trailSpan:.30,duration:3.5,strokeWidth:5.0,rotate:0,breathe:4.0},
+      { name:"Rounded Pentagon",tag:"5-fold Symmetry",point:roundedPolygonPoint(5,28,0.18),trailSpan:.30,duration:4.5,strokeWidth:5.0,rotate:18,breathe:4.0,
+        rebuild:a=>roundedPolygonPoint(a.sides,28,a.amp),args:{sides:5,amp:0.18},params:[P("sides","Sides",3,12,1),P("amp","Shape",0,0.5,.01)]},
+      { name:"Octagon",tag:"8-fold Symmetry",point:roundedPolygonPoint(8,28,0.08),trailSpan:.30,duration:4.0,strokeWidth:5.0,rotate:0,breathe:4.0,
+        rebuild:a=>roundedPolygonPoint(a.sides,28,a.amp),args:{sides:8,amp:0.08},params:[P("sides","Sides",3,12,1),P("amp","Shape",0,0.5,.01)]},
+      { name:"Reuleaux Triangle",tag:"Constant Width",point:reuleauxTrianglePoint(22),trailSpan:.32,duration:4.8,strokeWidth:5.0,rotate:20,breathe:4.2},
+    ];
+
+    // ── Engine ────────────────────────────────────────────
+
+    function buildPath(fn,steps,close){const d=Array.from({length:steps+1},(_,i)=>{const p=fn(i/steps);return`${i===0?"M":"L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`;}).join(" ");return close?d+" Z":d;}
+
+    const gallery = document.getElementById("gallery");
+    const instances = [];
+
+    function applyTrailAnim(inst, span, speed) {
+      if(inst.anim)inst.anim.cancel();
+      const len=Math.max(0.001,span)*inst.totalLen;
+      inst.trail.style.strokeDasharray=`${len.toFixed(2)} ${(inst.totalLen-len).toFixed(2)}`;
+      const absSpeed=Math.abs(speed)||0.01;
+      const dur=inst.config.duration/absSpeed;
+      const reverse=speed<0;
+      let dir=inst.config.alternate?"alternate":"normal";
+      if(reverse)dir=inst.config.alternate?"alternate-reverse":"reverse";
+      inst.anim=inst.trail.animate([{strokeDashoffset:0},{strokeDashoffset:-inst.totalLen}],
+        {duration:dur*1000,iterations:Infinity,easing:"linear",direction:dir});
+    }
+
+    function applyRotation(inst,speed){
+      if(!speed||speed===0){inst.rotateEl.style.animation="none";return;}
+      const dur=30/Math.abs(speed);
+      const name=speed>0?"spin":"spin-reverse";
+      inst.rotateEl.style.animation=`${name} ${dur.toFixed(2)}s linear infinite`;
+    }
+
+    function applySpeedAnim(inst){
+      const span=inst.currentTrailSpan!=null?inst.currentTrailSpan:inst.config.trailSpan;
+      const speed=inst.currentSpeed!=null?inst.currentSpeed:1;
+      applyTrailAnim(inst,span,speed);
+    }
+
+    function rebuildCurve(inst) {
+      const c=inst.config, steps=c.steps||480;
+      const pt=normalize(c.rebuild(inst.currentArgs),steps);
+      const d=buildPath(pt,steps,!c.open);
+      inst.ghost.setAttribute("d",d);inst.trail.setAttribute("d",d);
+      inst.totalLen=inst.ghost.getTotalLength();
+      applySpeedAnim(inst);
+    }
+
+    curves.forEach(c=>{
+      const card=document.createElement("article");card.className="curve-card";
+      card.style.setProperty("--curve-stroke-width",c.strokeWidth);
+      card.style.setProperty("--curve-breathe-duration",`${c.breathe}s`);
+      card.innerHTML='<div class="curve-frame"><svg viewBox="0 0 100 100" fill="none"><g class="curve-rotate"><g class="curve-breathe"><path class="curve-ghost" stroke-linecap="round" stroke-linejoin="round"/><path class="curve-trail"/></g></g></svg></div>'+
+        `<div class="curve-meta"><div class="curve-name">${c.name}</div><div class="curve-tag">${c.tag}</div></div>`;
+      gallery.appendChild(card);
+      const ghost=card.querySelector(".curve-ghost"),trail=card.querySelector(".curve-trail"),rotateEl=card.querySelector(".curve-rotate");
+      const steps=c.steps||480,pt=normalize(c.point,steps),d=buildPath(pt,steps,!c.open);
+      ghost.setAttribute("d",d);trail.setAttribute("d",d);
+      const inst={card,config:c,ghost,trail,rotateEl,totalLen:ghost.getTotalLength(),anim:null,currentArgs:c.args?{...c.args}:null};
+      applyTrailAnim(inst,c.trailSpan,1);
+      if(c.rotate)applyRotation(inst,30/c.rotate);
+      card.addEventListener("click",()=>openSidebar(inst));
+      instances.push(inst);
+    });
+
+    // ── Sidebar ───────────────────────────────────────────
+
+    const sidebar=document.getElementById("sidebar");
+    const sbName=document.getElementById("sb-name");
+    const sbTag=document.getElementById("sb-tag");
+    const sbParams=document.getElementById("sb-params");
+    const sbReset=document.getElementById("sb-reset");
+    let activeInst=null;
+
+    function openSidebar(inst) {
+      if(activeInst===inst){closeSidebar();return;}
+      if(activeInst)activeInst.card.classList.remove("is-selected");
+      activeInst=inst;inst.card.classList.add("is-selected");
+
+      const c=inst.config;
+      sbName.textContent=c.name;sbTag.textContent=c.tag;
+      sbParams.innerHTML="";sbReset.style.display="";
+
+      function addSection(t){const h=document.createElement("div");h.className="sidebar-section";h.textContent=t;sbParams.appendChild(h);}
+      function addSlider(key,label,min,max,step,val,ds){
+        const fmt=Number.isInteger(step)&&step>=1?Math.round(val):val.toFixed(2);
+        const w=document.createElement("div");w.className="ctrl";
+        w.innerHTML=`<div class="ctrl-head"><span>${label}</span><input type="number" class="ctrl-val-input" value="${fmt}" step="any" data-for="${ds}-${key}"/></div><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-${ds}="${key}"/>`;
+        sbParams.appendChild(w);
+      }
+      function addColor(key,label,val){
+        const w=document.createElement("div");w.className="ctrl";
+        w.innerHTML=`<div class="ctrl-head"><span>${label}</span></div><input type="color" value="${val}" data-common="${key}"/>`;
+        sbParams.appendChild(w);
+      }
+
+      // ── General ──────────────────────────────────
+      addSection("General");
+      addColor("_color","Color",getComputedStyle(inst.card).getPropertyValue("--curve-color").trim()||"#f0f0f0");
+      addSlider("_strokeWidth","Trail Width",0.5,10,0.1,parseFloat(getComputedStyle(inst.card).getPropertyValue("--curve-stroke-width"))||c.strokeWidth,"common");
+      addSlider("_trailOpacity","Trail Opacity",0,1.0,0.01,parseFloat(getComputedStyle(inst.card).getPropertyValue("--curve-trail-opacity"))||0.9,"common");
+      addSlider("_ghostWidth","Ghost Width",0.5,8,0.1,parseFloat(getComputedStyle(inst.card).getPropertyValue("--curve-ghost-width"))||2.5,"common");
+      addSlider("_ghostOpacity","Ghost Opacity",0,1.0,0.01,parseFloat(getComputedStyle(inst.card).getPropertyValue("--curve-ghost-opacity"))||0.07,"common");
+      addSlider("_trailSpan","Trail Span",0,1.0,0.01,inst.currentTrailSpan||c.trailSpan,"common");
+      addSlider("_speed","Speed",-10,10,0.1,inst.currentSpeed!=null?inst.currentSpeed:1,"common");
+      addSlider("_rotate","Rotation",-10,10,0.1,inst.currentRotate!=null?inst.currentRotate:0,"common");
+      addSlider("_breathe","Breathe",0,0.25,0.005,inst.currentBreathe!=null?inst.currentBreathe:0.05,"common");
+
+      // ── Curve-specific ───────────────────────────
+      addSection(c.name);
+      if(c.params&&c.params.length>0){c.params.forEach(p=>addSlider(p.key,p.label,p.min,p.max,p.step,inst.currentArgs[p.key],"param"));}
+      else{const e=document.createElement("div");e.className="sidebar-empty";e.textContent="No curve-specific parameters";sbParams.appendChild(e);}
+    }
+
+    function closeSidebar(){
+      if(activeInst)activeInst.card.classList.remove("is-selected");
+      activeInst=null;
+      sbName.textContent="Select a curve";sbTag.textContent="Click any card to adjust its parameters";
+      sbParams.innerHTML="";sbReset.style.display="none";
+    }
+
+    sbParams.addEventListener("input",e=>{
+      if(!activeInst||e.target.type==="number")return;
+      const numInput=e.target.closest(".ctrl")&&e.target.closest(".ctrl").querySelector(".ctrl-val-input");
+      const val=e.target.type==="color"?e.target.value:parseFloat(e.target.value);
+
+      const paramKey=e.target.dataset.param;
+      if(paramKey&&activeInst.config.rebuild){
+        activeInst.currentArgs[paramKey]=val;
+        const pDef=activeInst.config.params.find(p=>p.key===paramKey);
+        if(numInput)numInput.value=pDef&&Number.isInteger(pDef.step)&&pDef.step>=1?Math.round(val):val.toFixed(2);
+        rebuildCurve(activeInst);return;
+      }
+
+      const ck=e.target.dataset.common;if(!ck)return;
+      if(numInput)numInput.value=typeof val==="number"?val.toFixed(2):val;
+
+      switch(ck){
+        case "_color":activeInst.card.style.setProperty("--curve-color",val);break;
+        case "_strokeWidth":activeInst.card.style.setProperty("--curve-stroke-width",val);break;
+        case "_trailOpacity":activeInst.card.style.setProperty("--curve-trail-opacity",val);break;
+        case "_ghostOpacity":activeInst.card.style.setProperty("--curve-ghost-opacity",val);break;
+        case "_ghostWidth":activeInst.card.style.setProperty("--curve-ghost-width",val);break;
+        case "_trailSpan":activeInst.currentTrailSpan=val;applySpeedAnim(activeInst);break;
+        case "_speed":activeInst.currentSpeed=val;applySpeedAnim(activeInst);break;
+        case "_rotate":activeInst.currentRotate=val;applyRotation(activeInst,val);break;
+        case "_breathe":{activeInst.currentBreathe=val;const g=activeInst.card.querySelector(".curve-breathe");g.style.setProperty("--curve-breathe-min",(1-val).toFixed(3));g.style.setProperty("--curve-breathe-max",(1+val).toFixed(3));break;}
+      }
+    });
+
+    sbReset.addEventListener("click",()=>{
+      if(!activeInst)return;
+      const c=activeInst.config;
+      if(c.args)activeInst.currentArgs={...c.args};
+      activeInst.currentSpeed=null;activeInst.currentRotate=null;activeInst.currentTrailSpan=null;activeInst.currentBreathe=null;
+      activeInst.card.style.setProperty("--curve-stroke-width",c.strokeWidth);
+      activeInst.card.style.removeProperty("--curve-color");
+      activeInst.card.style.removeProperty("--curve-trail-opacity");
+      activeInst.card.style.removeProperty("--curve-ghost-opacity");
+      activeInst.card.style.removeProperty("--curve-ghost-width");
+      const g=activeInst.card.querySelector(".curve-breathe");g.style.removeProperty("--curve-breathe-min");g.style.removeProperty("--curve-breathe-max");
+      applyRotation(activeInst,c.rotate?30/c.rotate:0);
+      if(c.rebuild)rebuildCurve(activeInst);
+      else applyTrailAnim(activeInst,c.trailSpan,3);
+      openSidebar(activeInst);
+    });
+
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSidebar();});
+
+    // ── Sync number inputs → range sliders on commit ────
+    sidebar.addEventListener("change",e=>{
+      if(e.target.type==="number"&&e.target.classList.contains("ctrl-val-input")){
+        const ctrl=e.target.closest(".ctrl");
+        const slider=ctrl&&ctrl.querySelector('input[type="range"]');
+        if(slider){slider.value=e.target.value;slider.dispatchEvent(new Event("input",{bubbles:true}));}
+      }
+    });
+    sidebar.addEventListener("keydown",e=>{
+      if(e.key==="Enter"&&e.target.type==="number"){e.target.blur();}
+    });
+
+    // ── Global card size ──────────────────────────────────
+    const sizeSlider=document.getElementById("size-slider");
+    const sizeVal=document.getElementById("size-val");
+    function applySize(v){gallery.style.gridTemplateColumns=`repeat(auto-fill, minmax(${v}px, 1fr))`;}
+    sizeSlider.addEventListener("input",()=>{sizeVal.value=sizeSlider.value;applySize(sizeSlider.value);});
+    sizeVal.addEventListener("change",()=>{sizeSlider.value=sizeVal.value;applySize(sizeVal.value);});
+  </script>
+</body>
+</html>
