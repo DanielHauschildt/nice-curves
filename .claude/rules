@@ -1,0 +1,4 @@
+Never use `||` as a fallback for parseFloat/parseInt results — `0` is falsy and will be discarded. Always use `isNaN()` check instead:
+
+BAD:  parseFloat(input) || fallbackValue
+GOOD: const parsed = parseFloat(input); isNaN(parsed) ? fallbackValue : parsed
