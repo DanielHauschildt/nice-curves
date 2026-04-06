@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
+const isGitHubPages = process.env.GITHUB_ACTIONS === "true";
+
 const nextConfig: NextConfig = {
-  output: "export",
-  basePath: "/nice-curves",
+  output: isGitHubPages ? "export" : undefined,
+  basePath: isGitHubPages ? "/nice-curves" : "",
   images: { unoptimized: true },
 };
 
