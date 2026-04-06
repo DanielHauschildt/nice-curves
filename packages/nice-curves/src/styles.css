@@ -1,3 +1,10 @@
+/* Register --sweep so CSS can animate it as a number */
+@property --sweep {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 /* ══════════════════════════════════════════════════════════
    Curve SVG — pure structure, reads CSS vars from parent
    ══════════════════════════════════════════════════════════ */
@@ -9,7 +16,6 @@
 }
 
 .curve-ghost {
-  /* stroke set inline via url(#gradient) */
   stroke-width: var(--ghost-width, 2.5);
   opacity: var(--ghost-opacity, 0.07);
   stroke-linecap: round;
@@ -17,13 +23,12 @@
 }
 
 .curve-trail {
-  /* stroke set inline via url(#gradient) */
   stroke-width: var(--trail-width, 4.5);
   opacity: var(--trail-opacity, 0.9);
   stroke-linecap: round;
   fill: none;
-  stroke-dasharray: var(--progress, 0.3) calc(1 - var(--progress, 0.3));
-  stroke-dashoffset: var(--offset, 0);
+  stroke-dasharray: var(--progress, 0.3) calc(1.01 - var(--progress, 0.3));
+  stroke-dashoffset: calc(var(--offset, 0) - var(--sweep, 0));
 }
 
 .curve-rotate {
@@ -41,7 +46,7 @@
    ══════════════════════════════════════════════════════════ */
 
 .curve-animated .curve-trail {
-  animation: curve-trail var(--duration, 5s) linear infinite;
+  animation: curve-sweep var(--duration, 5s) linear infinite;
 }
 
 .curve-animated .curve-breathe {
@@ -65,9 +70,9 @@
 }
 
 /* Keyframes */
-@keyframes curve-trail {
-  from { stroke-dashoffset: var(--offset, 0); }
-  to { stroke-dashoffset: calc(var(--offset, 0) - 1); }
+@keyframes curve-sweep {
+  from { --sweep: 0; }
+  to { --sweep: 1; }
 }
 @keyframes curve-breathe {
   0%, 100% { transform: scale(var(--breathe-min, 0.95)); }
