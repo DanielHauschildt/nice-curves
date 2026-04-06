@@ -149,7 +149,7 @@ function useSections() {
     { key: "ghost", title: "Ghost", icon: <GhostIcon />, visible: true, content: <GhostControls /> },
     { key: "motion", title: "Motion", icon: <MotionIcon />, visible: true, content: <GlobalMotionControls /> },
     { key: "path", title: config?.name ?? "Path", icon: <PathIcon />, visible: !!config, content: <CurveControls /> },
-    { key: "code", title: "SVG", icon: <CodeIcon />, visible: !!(config && svgParams), content: svgParams ? <SVGPreview params={svgParams} /> : null },
+    { key: "code", title: "Export", icon: <CodeIcon />, visible: !!(config && svgParams), content: svgParams ? <SVGPreview params={{ ...svgParams, curveName: config?.name }} /> : null },
   ];
 
   return sections.filter((s) => s.visible);

@@ -11,9 +11,15 @@ export interface SVGExportParams {
   breatheMin?: number;
   breatheMax?: number;
   breatheDuration?: number;
+  curveName?: string;
 }
 
-/** Generates a static SVG string (no animation). */
+/** Just the SVG path d attribute */
+export function generatePathOnly({ d }: SVGExportParams): string {
+  return d;
+}
+
+/** Static SVG (no animation) */
 export function generateStaticSVG({
   d,
   color = "#f0f0f0",
@@ -30,7 +36,7 @@ export function generateStaticSVG({
 </svg>`;
 }
 
-/** Generates a self-contained animated SVG string with inline styles. */
+/** Self-contained animated SVG with inline styles */
 export function generateAnimatedSVG({
   d,
   color = "#f0f0f0",
@@ -72,4 +78,39 @@ export function generateAnimatedSVG({
   ${openRotate}${openBreathe}<path class="g" d="${d}" pathLength="1"/>
   <path class="t" d="${d}" pathLength="1"/>${closeBreathe}${closeRotate}
 </svg>`;
+}
+
+/** React component code */
+export function generateReactCode({
+  d,
+  color = "#f0f0f0",
+  trailWidth = 4.5,
+  trailOpacity = 0.9,
+  progress = 0.3,
+  ghostWidth = 2.5,
+  ghostOpacity = 0.5,
+  duration = 5,
+  curveName = "MyCurve",
+}: SVGExportParams): string {
+  return `import { CurveAnimated } from "nice-curves/curve-animated";
+import { CurveSVG } from "nice-curves/curve-svg";
+import "nice-curves/styles.css";
+
+const d = "${d.length > 80 ? d.slice(0, 77) + "..." : d}";
+
+export function ${curveName.replace(/[^a-zA-Z0-9]/g, "")}() {
+  return (
+    <CurveAnimated
+      trailColor="${color}"
+      progress={${progress}}
+      trailWidth={${trailWidth}}
+      trailOpacity={${trailOpacity}}
+      ghostWidth={${ghostWidth}}
+      ghostOpacity={${ghostOpacity}}
+      duration={${duration}}
+    >
+      <CurveSVG d={d} />
+    </CurveAnimated>
+  );
+}`;
 }
