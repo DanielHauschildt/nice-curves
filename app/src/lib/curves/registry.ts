@@ -93,7 +93,9 @@ export const curves: CurveConfig[] = [
 
   // ── Knots & Braids ──────────────────────────────────────
   { name: "Trefoil Knot", tag: "Topology Knot", point: f.trefoilKnotPoint(12), progress: 0.35, duration: 5.5, strokeWidth: 4.5, rotate: 0, breathe: 5.0 },
-  { name: "Torus Knot", tag: "(3,2) Torus Knot", point: f.torusKnotPoint(11), progress: 0.30, duration: 6.0, strokeWidth: 4.3, rotate: 0, breathe: 5.2 },
+  { name: "Torus Knot", tag: "(p,q) Torus Knot", point: f.torusKnotConfigPoint(3, 2, 2, 1, 10), progress: 0.30, duration: 6.0, strokeWidth: 4.3, rotate: 0, breathe: 5.2,
+    rebuild: (a) => f.torusKnotConfigPoint(a.p, a.q, a.R, a.r, 10), args: { p: 3, q: 2, R: 2, r: 1 },
+    params: [P("p", "p (winds)", 1, 12, 1), P("q", "q (threads)", 1, 12, 1), P("R", "Major Radius", 0.5, 5, 0.1), P("r", "Minor Radius", 0.1, 3, 0.1)] },
   { name: "Epitrochoid", tag: "Outer Spirograph", point: f.epitrochoidPoint(5, 2, 3.5, 3), progress: 0.35, duration: 5.5, strokeWidth: 4.4, rotate: 24, breathe: 4.5,
     rebuild: (a) => f.epitrochoidPoint(a.R, a.r, a.d, a.sc), args: { R: 5, r: 2, d: 3.5, sc: 3 },
     params: [P("R", "R", 2, 10, 0.1), P("r", "r", 0.5, 5, 0.1), P("d", "d", 0.5, 6, 0.1), P("sc", "Scale", 1, 5, 0.05)] },

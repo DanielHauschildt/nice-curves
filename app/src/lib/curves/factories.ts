@@ -234,6 +234,15 @@ export function torusKnotPoint(sc: number): PointFunction {
   };
 }
 
+/** Configurable torus knot: p wraps around the torus, q threads through the hole */
+export function torusKnotConfigPoint(pk: number, qk: number, R: number, r: number, sc: number): PointFunction {
+  return (p) => {
+    const t = p * Math.PI * 2;
+    const rad = R + r * Math.cos(qk * t);
+    return { x: 50 + rad * Math.cos(pk * t) * sc, y: 50 + rad * Math.sin(pk * t) * sc };
+  };
+}
+
 export function superellipsePoint(n: number, a: number, b: number): PointFunction {
   return (p) => {
     const t = p * Math.PI * 2;
